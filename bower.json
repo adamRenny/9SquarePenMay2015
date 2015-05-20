@@ -1,0 +1,31 @@
+{
+  "name": "9Pens-May2015",
+  "version": "1.0.0",
+  "authors": [
+    "Adam Ranfelt <adamRenny@gmail.com>"
+  ],
+  "description": "9 Pens entry May 2015",
+  "main": "index.html",
+  "moduleType": [
+    "amd"
+  ],
+  "keywords": [
+    "creative"
+  ],
+  "license": "MIT",
+  "homepage": "adamRenny.me",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "requirejs": "~2.1.17",
+    "snap.svg": "~0.4.1",
+    "doc-ready": "~1.0.4",
+    "bluebird": "~2.9.25",
+    "gl-matrix": "~2.2.1"
+  }
+}
