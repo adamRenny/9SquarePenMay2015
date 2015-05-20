@@ -2,9 +2,11 @@ define(function(require) {
     'use strict';
 
     var CONSTANTS = require('./Constants');
-    
+    var stage = require('./Stage');
     var PathParticle = require('./PathParticle');
     var PeriodicPath = require('./PeriodicPath');
+    var Snap = require('snap');
+    var Hexagon = require('./Hexagon');
 
     var MILLISECONDS_PER_SECOND = 1000;
     var THRESHOLD = (MILLISECONDS_PER_SECOND/60) * 15;
@@ -13,7 +15,8 @@ define(function(require) {
     function Visual() {
         this.shouldStop = false;
 
-        this.build();
+        // this.build();
+        this.buildHexes();
     }
 
     function build() {
@@ -65,6 +68,49 @@ define(function(require) {
         horizontalPath.reposition(angleX, angleY, angleZ);        
     }
 
+    function buildHexes() {
+        var group = stage.g();
+        var colors = [
+            CONSTANTS.COLORS.RED,
+            // CONSTANTS.COLORS.WHITE,
+            CONSTANTS.COLORS.BLUE,
+            CONSTANTS.COLORS.GREEN,
+            CONSTANTS.COLORS.YELLOW
+        ];
+        var numberOfHexes = 4;
+        var initial = new Hexagon(colors[Math.round(Math.random() * colors.length)], 0, 0, 20);
+        var hexes = [initial];
+        var numberOfHexesWide = Math.ceil(CONSTANTS.DIMENSIONS.SIZE / initial.width) + 2;
+        var numberOfHexesHigh = Math.ceil(CONSTANTS.DIMENSIONS.SIZE / initial.height) + 2;
+        
+        initial.impl.remove();
+        var x = 0;
+        var y = 0;
+        var isOffset = false;
+        var dx = initial.width * 0.74;
+        var dy = initial.height * 0.998;
+        var yOffset = initial.height * 0.5;
+        for (x = 0; x < numberOfHexesWide; x++) {
+            var hexX = x * dx;
+            for (y = 0; y < numberOfHexesHigh; y++) {
+                var hexY = y * dy;
+                if (isOffset) {
+                    hexY = hexY - yOffset;
+                }
+                var hex = new Hexagon(colors[Math.round(Math.random() * colors.length)], hexX, hexY, 20);
+                hexes.push(hex);
+                hex.impl.remove();
+                group.append(hex.impl);
+            }
+
+            isOffset = !isOffset;
+        }
+
+        var mat = new Snap.Matrix();
+        mat.scale(2, 2);
+        group.transform(mat);
+    }
+
     function run() {
         var lastTimestamp = (new Date()).getTime();
         var visual = this;
@@ -98,6 +144,7 @@ define(function(require) {
     }
 
     Visual.prototype.build = build;
+    Visual.prototype.buildHexes = buildHexes;
     Visual.prototype.run = run;
 
     return Visual;

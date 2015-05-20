@@ -21,7 +21,7 @@ require([
 
     docReady(function() {
         var visual = new Visual();
-        visual.run();
+        // visual.run();
         window.v = visual;
     });
 
