@@ -2,120 +2,60 @@ define(function(require) {
     'use strict';
 
     var CONSTANTS = require('./Constants');
-    var stage = require('./Stage');
-    var PathParticle = require('./PathParticle');
-    var PeriodicPath = require('./PeriodicPath');
-    var Snap = require('snap');
-    var Hexagon = require('./Hexagon');
+    var ParticleSystem = require('./ParticleSystem');
+    var TimelineLite = require('TimelineLite');
 
     var MILLISECONDS_PER_SECOND = 1000;
     var THRESHOLD = (MILLISECONDS_PER_SECOND/60) * 15;
-    var TWO_PI = Math.PI * 2;
+
+    var Power1 = window.Power1;
 
     function Visual() {
         this.shouldStop = false;
 
-        // this.build();
-        this.buildHexes();
+        this.build();
     }
 
     function build() {
-        this.paths = [];
-        var rotations = 0.32;
-        var zDistance = 150;
-        var verticalPath = new PeriodicPath(
-            CONSTANTS.DIMENSIONS.HALF_SIZE * 0.8, CONSTANTS.DIMENSIONS.HALF_SIZE, CONSTANTS.DIMENSIONS.HALF_SIZE, zDistance,
-            rotations, PeriodicPath.AXES.X
-        );
-        var horizontalPath = new PeriodicPath(
-            CONSTANTS.DIMENSIONS.HALF_SIZE * 0.8, CONSTANTS.DIMENSIONS.HALF_SIZE, CONSTANTS.DIMENSIONS.HALF_SIZE, zDistance,
-            rotations, PeriodicPath.AXES.Y
-        );
-        var innerPath = new PeriodicPath(
-            CONSTANTS.DIMENSIONS.QUARTER_SIZE * 0.35, CONSTANTS.DIMENSIONS.HALF_SIZE, CONSTANTS.DIMENSIONS.HALF_SIZE, zDistance,
-            rotations, PeriodicPath.AXES.Z
-        );
-        this.paths.push(verticalPath);
-        this.paths.push(horizontalPath);
-        this.paths.push(innerPath);
-
-        var angleX = TWO_PI * (-1 / 32);
-        var angleY = TWO_PI * (-2 / 32);
-        var angleZ = TWO_PI * (0 / 16);
-
-        var i = 0;
-        var numberOfParticles = 7;
-        var step = 1 / numberOfParticles;
-
-        numberOfParticles = 3;
-        step = 1 / numberOfParticles;
-        for (i = 0; i < numberOfParticles; i++) {
-            innerPath.particles.push(new PathParticle(CONSTANTS.COLORS.YELLOW, i * step));
-        }
-        innerPath.reposition(angleX, angleY, angleZ);
-
-        numberOfParticles = 7;
-        step = 1 / numberOfParticles;
-
-        for (i = 0; i < numberOfParticles; i++) {
-            verticalPath.particles.push(new PathParticle(CONSTANTS.COLORS.GREEN, i * step));
-        }
-        verticalPath.reposition(angleX, angleY, angleZ);
-
-        for (i = 0; i < numberOfParticles; i++) {
-            horizontalPath.particles.push(new PathParticle(CONSTANTS.COLORS.RED, i * step));
-        }
-        horizontalPath.reposition(angleX, angleY, angleZ);        
-    }
-
-    function buildHexes() {
-        var group = stage.g();
-        var colors = [
-            CONSTANTS.COLORS.RED,
-            // CONSTANTS.COLORS.WHITE,
-            CONSTANTS.COLORS.BLUE,
-            CONSTANTS.COLORS.GREEN,
-            CONSTANTS.COLORS.YELLOW
-        ];
-        var numberOfHexes = 4;
-        var initial = new Hexagon(colors[Math.round(Math.random() * colors.length)], 0, 0, 20);
-        var hexes = [initial];
-        var numberOfHexesWide = Math.ceil(CONSTANTS.DIMENSIONS.SIZE / initial.width) + 2;
-        var numberOfHexesHigh = Math.ceil(CONSTANTS.DIMENSIONS.SIZE / initial.height) + 2;
-        
-        initial.impl.remove();
-        var x = 0;
-        var y = 0;
-        var isOffset = false;
-        var dx = initial.width * 0.74;
-        var dy = initial.height * 0.998;
-        var yOffset = initial.height * 0.5;
-        for (x = 0; x < numberOfHexesWide; x++) {
-            var hexX = x * dx;
-            for (y = 0; y < numberOfHexesHigh; y++) {
-                var hexY = y * dy;
-                if (isOffset) {
-                    hexY = hexY - yOffset;
-                }
-                var hex = new Hexagon(colors[Math.round(Math.random() * colors.length)], hexX, hexY, 20);
-                hexes.push(hex);
-                hex.impl.remove();
-                group.append(hex.impl);
-            }
-
-            isOffset = !isOffset;
-        }
-
-        var mat = new Snap.Matrix();
-        mat.scale(2, 2);
-        group.transform(mat);
+        this.system = new ParticleSystem();
+        this.timeline = new TimelineLite();
+        this.timeline
+            .from(this.system, 0, {})
+            .to(this.system, 1.4, {
+                scale: 0.10,
+                rotationY: 7 * Math.PI,
+                rotationZ: Math.PI / 4,
+                ease: Power4.easeInOut
+            })
+            .to(this.system, 0.2, {
+                scale: 0.25,
+                rotationX: 0,
+                rotationY: 6 * Math.PI * (18 / 16),
+                rotationZ: Math.PI / 8,
+                ease: Quart.easeOut
+            })
+            .to(this.system, 1, {
+                scale: 0.96,
+                rotationX: 0,
+                rotationY: 4 * Math.PI,
+                rotationZ: 0,
+                ease: Power4.easeOut
+            }, '+= 0.05')
+            .to(this.system, .35, {
+                scale: 1,
+                rotationX: 0,
+                rotationY: 4 * Math.PI,
+                rotationZ: 0,
+                ease: Linear.easeInOut
+            });
     }
 
     function run() {
         var lastTimestamp = (new Date()).getTime();
         var visual = this;
+        var timeline = this.timeline;
 
-        var paths = this.paths;
+        var system = this.system;
 
         function step() {
             if (visual.shouldStop) {
@@ -130,21 +70,22 @@ define(function(require) {
                 return;
             }
 
+            if (!timeline._active) {
+                system.rotationX = 0;
+                system.rotationY = 0;
+                system.rotationZ = 0;
+                timeline.restart();
+            }
+
             var elapsedTimestampInSeconds = elapsedTimestamp / MILLISECONDS_PER_SECOND;
 
-            var i = 0;
-            var length = paths.length;
-            for (i = 0; i < length; i++) {
-                var path = paths[i];
-                path.update(elapsedTimestampInSeconds);
-            }
+            system.step(elapsedTimestampInSeconds);
         }
 
         step();
     }
 
     Visual.prototype.build = build;
-    Visual.prototype.buildHexes = buildHexes;
     Visual.prototype.run = run;
 
     return Visual;

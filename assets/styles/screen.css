@@ -4,15 +4,19 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: blue;
+    background: #2A3443;
 }
 
 div {
     height: 250px;
     width: 250px;
-    background: blue;
+    background: #2A3443;
 }
 
 svg {
-    background: white;
+    background: #2A3443;
+}
+
+.hidden {
+    display: none;
 }

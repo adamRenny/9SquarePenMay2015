@@ -1,0 +1,17 @@
+{
+  "name": "9P-05142015",
+  "version": "1.0.0",
+  "description": "9Pen Animation",
+  "main": "index.html",
+  "dependencies": {
+    "amdclean": "^2.7.0",
+    "grunt": "^0.4.5",
+    "grunt-amdclean": "^0.1.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

@@ -5,6 +5,8 @@ define(function(require) {
     var stage = require('./Stage');
     var Snap = require('snap');
     var glMatrix = require('glMatrix');
+    var mat4 = glMatrix.mat4;
+    var vec3 = glMatrix.vec3;
 
     var AXES = {
         X: 0,
@@ -13,32 +15,60 @@ define(function(require) {
     };
 
     var ROTATION = Math.PI * 2;
+    var vector = [];
 
     function PeriodicPath(radius, centerX, centerY, centerZ, rotationsPerSecond, axis) {
         this.radius = radius;
         this.particles = [];
         this.rotationsPerSecond = rotationsPerSecond;
         this.axis = axis;
+
+        this.baseTransform = mat4.create();
+
         this.centerX = centerX;
         this.centerY = centerY;
         this.centerZ = centerZ;
 
-        this.transform = glMatrix.mat4.create();
+        this.rotationX = 0;
+        this.rotationY = 0;
+        this.rotationZ = 0;
+
+        this.scaleX = 1;
+        this.scaleY = 1;
+        this.scaleZ = 1;
+
+        this.transform = mat4.create();
     }
 
-    function reposition(x, y, z) {
-        glMatrix.mat4.identity(this.transform);
-        glMatrix.mat4.translate(
+    function updateTransform() {
+        vector[AXES.X] = this.centerX;
+        vector[AXES.Y] = this.centerY;
+        vector[AXES.Z] = this.centerZ;
+
+        mat4.copy(this.transform, this.baseTransform);
+        mat4.translate(
             this.transform,
             this.transform,
-            [this.centerX, this.centerY, this.centerZ]
+            vector
         );
-        glMatrix.mat4.rotateX(this.transform, this.transform, x);
-        glMatrix.mat4.rotateY(this.transform, this.transform, y);
-        glMatrix.mat4.rotateZ(this.transform, this.transform, z);
+
+        vector[AXES.X] = this.scaleX;
+        vector[AXES.Y] = this.scaleY;
+        vector[AXES.Z] = this.scaleZ;
+
+        mat4.scale(
+            this.transform,
+            this.transform,
+            vector
+        );
+
+        mat4.rotateX(this.transform, this.transform, this.rotationX);
+        mat4.rotateY(this.transform, this.transform, this.rotationY);
+        mat4.rotateZ(this.transform, this.transform, this.rotationZ);
     }
 
     function update(elapsed) {
+        this.updateTransform();
 
         var additionalTime = this.rotationsPerSecond * elapsed;
         
@@ -69,9 +99,7 @@ define(function(require) {
             position[AXES.Y] = Math.sin(theta) * this.radius;
             position[AXES.Z] = Math.cos(theta) * this.radius;
 
-            glMatrix.vec3.transformMat4(position, position, this.transform);
-
-            // console.log(position[AXES.X], position[AXES.Y], position[AXES.Z]);
+            vec3.transformMat4(position, position, this.transform);
 
             particle.x = position[AXES.X];
             particle.y = position[AXES.Y];
@@ -95,9 +123,7 @@ define(function(require) {
             position[AXES.Y] = 0;
             position[AXES.Z] = Math.sin(theta) * this.radius;
 
-            glMatrix.vec3.transformMat4(position, position, this.transform);
-
-            // console.log(position[AXES.X], position[AXES.Y], position[AXES.Z]);
+            vec3.transformMat4(position, position, this.transform);
 
             particle.x = position[AXES.X];
             particle.y = position[AXES.Y];
@@ -121,9 +147,7 @@ define(function(require) {
             position[AXES.Y] = Math.sin(theta) * this.radius;
             position[AXES.Z] = 0;
 
-            glMatrix.vec3.transformMat4(position, position, this.transform);
-
-            // console.log(position[AXES.X], position[AXES.Y], position[AXES.Z]);
+            vec3.transformMat4(position, position, this.transform);
 
             particle.x = position[AXES.X];
             particle.y = position[AXES.Y];
@@ -133,7 +157,7 @@ define(function(require) {
         }
     }
 
-    PeriodicPath.prototype.reposition = reposition;
+    PeriodicPath.prototype.updateTransform = updateTransform;
 
     PeriodicPath.prototype.applyAboutXAxis = applyAboutXAxis;
     PeriodicPath.prototype.applyAboutYAxis = applyAboutYAxis;

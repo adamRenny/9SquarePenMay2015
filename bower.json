@@ -26,6 +26,7 @@
     "snap.svg": "~0.4.1",
     "doc-ready": "~1.0.4",
     "bluebird": "~2.9.25",
-    "gl-matrix": "~2.2.1"
+    "gl-matrix": "~2.2.1",
+    "gsap": "~1.16.1"
   }
 }
